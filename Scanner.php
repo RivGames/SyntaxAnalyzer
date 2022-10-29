@@ -161,9 +161,65 @@ class Scanner
     // Возвращает следующий симовл из исходного файла.
     // Если достигнут конец файла то возвращается
     // логическое значение
-    public function getChar()
+    public function getChar(): string|bool
     {
-        
+        return $this->r->getChar();
     }
 
+    // Возвращает все символы, составляющие слово
+    private function eatWordChars(string $char): string
+    {
+        $val = $char;
+        while ($this->isWordChar($char = $this->getChar())) {
+            $val .= $char;
+        }
+        if ($char) {
+            $this->pushBackChar();
+        }
+        return $val;
+    }
+
+    // Перемещение в исходном тексте на один символ назад
+    private function pushBackChar(): void
+    {
+        $this->r->pushBackChar();
+    }
+
+    private function isWordChar($char): bool
+    {
+        if (is_bool($char)) {
+            return false;
+        }
+        return (preg_match("#[A-Za-z0-9_\-]#", $char) === 1);
+    }
+    // Аргумент является пробельным символом
+    private function isSpaceChar($char): bool
+    {
+        return (preg_match("#\t| /#", $char) === 1);
+    }
+
+    private function isEolChar($char): bool
+    {
+        $check = preg_match("#\n|\r#",$char);
+        return $check === 1;
+    }
+    // Поглощает символы \n, \r, or \r\n
+    private function manageEolChars(string $char): string
+    {
+        if($char == "\r"){
+            $next_char = $this->getChar();
+            if($next_char == "\n"){
+                return "{$char}{$next_char}";
+            }
+            else{
+                $this->pushBackChar();
+            }
+        }
+        return $char;
+    }
+
+    public function getPos(): int
+    {
+        return $this->r->getPos();
+    }
 }
